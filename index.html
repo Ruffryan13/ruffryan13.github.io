@@ -1,188 +1,556 @@
 <!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Website Builder & Live Editor</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Monaco Editor CDN -->
+  <link rel="stylesheet" data-name="vs/default" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/editor/editor.main.min.css">
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans overflow-hidden bg-slate-950 text-slate-100">
+
+  <!-- TOP NAVBAR -->
+  <header class="h-14 border-b border-slate-800 bg-slate-900 px-4 flex items-center justify-between z-20 shrink-0">
+    <div class="flex items-center space-x-3">
+      <div class="p-2 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-lg shadow-lg shadow-indigo-500/20">
+        <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-base leading-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
+          AI WebBuilder <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium ml-1">GitHub Pages Ready</span>
+        </h1>
+      </div>
+    </div>
+
+    <!-- Actions Right -->
+    <div class="flex items-center space-x-2">
+      <!-- API Key Config Button -->
+      <button id="apiKeyBtn" onclick="toggleApiKeyModal()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300 transition flex items-center gap-1.5">
+        <i data-lucide="key" class="w-3.5 h-3.5 text-amber-400"></i>
+        <span id="apiKeyStatusText">API Key Configured</span>
+      </button>
+
+      <!-- Viewport Toggle Buttons -->
+      <div class="hidden sm:flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 text-slate-400 text-xs">
+        <button onclick="setDeviceView('desktop')" id="btnDesktop" class="px-2.5 py-1 rounded bg-slate-800 text-slate-100 font-medium flex items-center gap-1 transition">
+          <i data-lucide="monitor" class="w-3.5 h-3.5"></i> Desktop
+        </button>
+        <button onclick="setDeviceView('tablet')" id="btnTablet" class="px-2.5 py-1 rounded hover:text-slate-200 flex items-center gap-1 transition">
+          <i data-lucide="tablet" class="w-3.5 h-3.5"></i> Tablet
+        </button>
+        <button onclick="setDeviceView('mobile')" id="btnMobile" class="px-2.5 py-1 rounded hover:text-slate-200 flex items-center gap-1 transition">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i> Mobile
+        </button>
+      </div>
+
+      <!-- Copy Code Button -->
+      <button onclick="copyCode()" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5">
+        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+        <span class="hidden md:inline">Copy HTML</span>
+      </button>
+
+      <!-- Download Button -->
+      <button onclick="downloadCode()" class="px-3.5 py-1.5 text-xs font-medium rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/30 transition flex items-center gap-1.5">
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        <span>Download index.html</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN SPLIT WORKSPACE -->
+  <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+    <!-- LEFT PANEL: Editor & AI Prompt Controls -->
+    <section id="leftPanel" class="w-full md:w-1/2 flex flex-col border-r border-slate-800 bg-slate-900/90 h-1/2 md:h-full z-10">
+      
+      <!-- Quick AI Preset Suggestions Toolbar -->
+      <div class="p-2.5 border-b border-slate-800 bg-slate-950/60 flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <span class="text-xs font-semibold text-indigo-400 shrink-0 flex items-center gap-1 pl-1">
+          <i data-lucide="wand2" class="w-3.5 h-3.5"></i> Quick Edits:
+        </span>
+        <button onclick="applyPresetPrompt('Change the color theme to a dark futuristic sleek vibe with neon accents.')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-900/50 hover:border-indigo-500/50 text-slate-300 hover:text-white border border-slate-700/60 rounded-full transition shrink-0">
+          🌙 Dark Theme
+        </button>
+        <button onclick="applyPresetPrompt('Add a responsive modern navigation bar at the top with logo and links.')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-900/50 hover:border-indigo-500/50 text-slate-300 hover:text-white border border-slate-700/60 rounded-full transition shrink-0">
+          🧭 Add Navbar
+        </button>
+        <button onclick="applyPresetPrompt('Add a 3-column pricing table section with highlight tag on popular plan.')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-900/50 hover:border-indigo-500/50 text-slate-300 hover:text-white border border-slate-700/60 rounded-full transition shrink-0">
+          💳 Pricing Grid
+        </button>
+        <button onclick="applyPresetPrompt('Add a functional contact form with name, email, subject, message, and submit button.')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-900/50 hover:border-indigo-500/50 text-slate-300 hover:text-white border border-slate-700/60 rounded-full transition shrink-0">
+          📩 Contact Form
+        </button>
+        <button onclick="applyPresetPrompt('Add a sleek footer section with copyright, links, and social icon buttons.')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-indigo-900/50 hover:border-indigo-500/50 text-slate-300 hover:text-white border border-slate-700/60 rounded-full transition shrink-0">
+          🦶 Footer Section
+        </button>
+      </div>
+
+      <!-- Code Editor Tab Bar -->
+      <div class="px-3 py-2 bg-slate-900 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+            <i data-lucide="code-2" class="w-3.5 h-3.5 text-indigo-400"></i> Code Editor (index.html)
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetToStarterTemplate()" class="text-xs text-slate-400 hover:text-slate-200 transition flex items-center gap-1 px-2 py-1 rounded hover:bg-slate-800">
+            <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Reset Template
+          </button>
+        </div>
+      </div>
+
+      <!-- Editor Container -->
+      <div class="flex-1 relative w-full bg-slate-950">
+        <div id="monacoEditorContainer" class="absolute inset-0"></div>
+      </div>
+
+      <!-- AI Prompt Bar Panel at Bottom of Editor -->
+      <div class="p-3 bg-slate-950 border-t border-slate-800">
+        <div class="relative flex flex-col gap-2">
+          <label for="aiPromptInput" class="text-xs font-semibold text-slate-300 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-400"></i> AI Website Editing Command
+            </span>
+            <span class="text-[10px] text-slate-500 font-normal">Press Ctrl+Enter or click Generate</span>
+          </label>
+          <div class="flex gap-2">
+            <div class="relative flex-1">
+              <textarea id="aiPromptInput" rows="2" placeholder="e.g. 'Add a hero section with a call to action button' or 'Change layout to grid'" class="w-full bg-slate-900 text-slate-100 placeholder-slate-500 border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 rounded-xl p-2.5 text-xs resize-none transition outline-none"></textarea>
+            </div>
+            <button id="generateBtn" onclick="sendAiEditCommand()" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white rounded-xl text-xs font-semibold shadow-lg shadow-indigo-600/25 transition flex flex-col items-center justify-center gap-1 shrink-0 w-28 disabled:opacity-50">
+              <span id="btnSpinner" class="hidden">
+                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+              </span>
+              <span id="btnIcon" class="flex items-center gap-1">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i> Update
+              </span>
+              <span class="text-[10px] opacity-75 font-normal">via Gemini AI</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Live Interactive Preview -->
+    <section id="rightPanel" class="w-full md:w-1/2 flex flex-col bg-slate-950 h-1/2 md:h-full overflow-hidden">
+      
+      <!-- Preview Header -->
+      <div class="h-10 border-b border-slate-800 bg-slate-900/80 px-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center space-x-2">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span class="text-xs font-medium text-slate-300">Live Preview Frame</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="refreshPreview()" class="text-slate-400 hover:text-slate-200 transition p-1 rounded hover:bg-slate-800" title="Refresh Live Frame">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Frame Container with Device Sizing Emulation -->
+      <div class="flex-1 bg-slate-900/50 p-2 sm:p-4 flex items-center justify-center overflow-auto">
+        <div id="previewFrameWrapper" class="w-full h-full bg-white rounded-lg shadow-2xl overflow-hidden transition-all duration-300 border border-slate-800 relative">
+          <iframe id="previewIframe" class="w-full h-full border-0 bg-white" title="Website Preview"></iframe>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: Custom API Key Config -->
+  <div id="apiKeyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+    <div class="glass-panel w-full max-w-md rounded-2xl p-6 shadow-2xl border border-slate-800 text-slate-100">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-base font-bold flex items-center gap-2">
+          <i data-lucide="key" class="w-5 h-5 text-amber-400"></i> Gemini API Key Configuration
+        </h3>
+        <button onclick="toggleApiKeyModal()" class="text-slate-400 hover:text-slate-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <p class="text-xs text-slate-400 mb-4 leading-relaxed">
+        The app uses Gemini API to edit and generate website HTML. You can provide your custom key or rely on the environment default.
+      </p>
+      <div class="mb-4">
+        <label for="customApiKeyInput" class="block text-xs font-semibold mb-1 text-slate-300">Enter API Key (Optional)</label>
+        <input type="password" id="customApiKeyInput" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-indigo-500">
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="clearCustomApiKey()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition">Clear Key</button>
+        <button onclick="saveCustomApiKey()" class="px-4 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast" class="fixed bottom-4 right-4 z-50 transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none">
+    <div class="bg-slate-800 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-xs">
+      <i data-lucide="info" id="toastIcon" class="w-4 h-4 text-indigo-400"></i>
+      <span id="toastMessage">Notification message</span>
+    </div>
+  </div>
+
+  <!-- MONACO EDITOR SCRIPTS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs/loader.min.js"></script>
+  
+  <script>
+    // --- STARTER TEMPLATE FOR NEW WEBSITES ---
+    const defaultStarterHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI WebBuilder | Temporary Staging Domains</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>My Portfolio & App</title>
+  <script src="https://cdn.tailwindcss.com"><\/script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
-    .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px border rgba(255, 255, 255, 0.1); }
-    .glow { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
-    @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    .animate-pulse-slow { animation: pulse-slow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    body { font-family: 'Inter', sans-serif; }
   </style>
 </head>
-<body class="bg-[#0f172a] text-slate-100 min-h-screen flex flex-col">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between">
 
   <!-- Header Navigation -->
-  <header class="border-b border-slate-800/60 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center space-x-2">
-        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-xl">A</div>
-        <span class="text-xl font-bold tracking-tight text-white">AI<span class="text-indigo-400">Deploy</span></span>
+      <div class="text-xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
+        MyBrand
       </div>
-      <nav class="hidden md:flex space-x-8 text-sm font-medium text-slate-400">
-        <a href="#features" class="hover:text-indigo-400 transition-colors">Features</a>
-        <a href="#sandbox" class="hover:text-indigo-400 transition-colors">Sandbox</a>
-        <a href="#docs" class="hover:text-indigo-400 transition-colors">Documentation</a>
+      <nav class="hidden md:flex space-x-6 text-sm font-medium text-slate-300">
+        <a href="#features" class="hover:text-indigo-400 transition">Features</a>
+        <a href="#about" class="hover:text-indigo-400 transition">About</a>
+        <a href="#contact" class="hover:text-indigo-400 transition">Contact</a>
       </nav>
-      <div class="flex items-center space-x-4">
-        <button onclick="generateNewStaging()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-5 py-2.5 rounded-full transition shadow-lg shadow-indigo-600/20 active:scale-95">
-          New Staging Site
-        </button>
-      </div>
+      <a href="#get-started" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition shadow-lg shadow-indigo-600/20">
+        Get Started
+      </a>
     </div>
   </header>
 
-  <main class="flex-1">
-    <!-- Hero Section -->
-    <section class="max-w-6xl mx-auto px-6 py-20 lg:py-32 grid lg:grid-cols-2 gap-12 items-center">
-      <div>
-        <div class="inline-flex items-center space-x-2 text-xs uppercase tracking-widest text-indigo-400 font-bold mb-6 px-4 py-1.5 bg-indigo-500/10 rounded-full border border-indigo-500/20">
-          <span class="relative flex h-2 w-2">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-          </span>
-          <span>Instant Staging Active</span>
-        </div>
-        <h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight mb-8 leading-[1.1] text-white">
-          Code with AI, Test on <span class="text-indigo-400">Temp Domains</span>.
-        </h1>
-        <p class="text-slate-400 text-lg lg:text-xl mb-10 max-w-xl leading-relaxed">
-          The only platform where the AI doesn't just write code—it deploys a unique, private staging URL for every prompt change you make. 
-        </p>
-        <div class="flex flex-wrap gap-4">
-          <button onclick="generateNewStaging()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl transition-all hover:-translate-y-1">
-            Deploy Live Sandbox
-          </button>
-          <button class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-8 py-4 rounded-xl border border-slate-700 transition-all">
-            View Console
-          </button>
-        </div>
-      </div>
-
-      <!-- Live Preview Mockup -->
-      <div class="relative">
-        <div class="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl blur opacity-25"></div>
-        <div class="relative glass rounded-2xl border border-slate-700 overflow-hidden shadow-2xl">
-          <!-- Browser Chrome -->
-          <div class="bg-slate-800/50 px-4 py-3 border-b border-slate-700 flex items-center space-x-4">
-            <div class="flex space-x-1.5">
-              <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
-              <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
-              <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
-            </div>
-            <div class="flex-1 bg-slate-900/80 rounded-md px-3 py-1.5 text-xs text-slate-400 font-mono flex items-center justify-between border border-slate-700">
-              <span id="temp-url">https://temp-8a2f-deploy.webbuilder.ai</span>
-              <svg onclick="copyUrl()" class="w-4 h-4 cursor-pointer hover:text-indigo-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
-            </div>
-          </div>
-          <!-- Website Content Preview -->
-          <div class="p-8 h-[300px] bg-slate-900 overflow-y-auto">
-            <div class="space-y-6">
-              <div class="h-4 bg-slate-800 rounded w-3/4 animate-pulse"></div>
-              <div class="h-20 bg-indigo-500/10 rounded-lg border border-indigo-500/20 p-4">
-                <div class="h-2 bg-indigo-400/40 rounded w-full mb-3"></div>
-                <div class="h-2 bg-indigo-400/40 rounded w-5/6"></div>
-              </div>
-              <div class="grid grid-cols-3 gap-4">
-                <div class="h-16 bg-slate-800 rounded animate-pulse"></div>
-                <div class="h-16 bg-slate-800 rounded animate-pulse delay-75"></div>
-                <div class="h-16 bg-slate-800 rounded animate-pulse delay-150"></div>
-              </div>
-            </div>
-            <div id="deployment-toast" class="hidden mt-8 text-center bg-emerald-500/20 text-emerald-400 text-xs py-2 rounded border border-emerald-500/30 font-medium">
-              Staging environment synchronized!
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Steps Section -->
-    <section id="features" class="bg-slate-900/50 py-24">
-      <div class="max-w-6xl mx-auto px-6">
-        <div class="grid md:grid-cols-3 gap-10">
-          <div class="p-8 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-indigo-500/50 transition duration-300">
-            <div class="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400 mb-6">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-            </div>
-            <h3 class="text-xl font-bold mb-3 text-white">Prompt to Edit</h3>
-            <p class="text-slate-400 leading-relaxed">Tell the AI what to change. Add a footer, change a color, or build a whole contact page.</p>
-          </div>
-          <div class="p-8 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-indigo-500/50 transition duration-300">
-            <div class="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400 mb-6">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            </div>
-            <h3 class="text-xl font-bold mb-3 text-white">Instant Deployment</h3>
-            <p class="text-slate-400 leading-relaxed">We automatically generate a temporary <code>.webbuilder.ai</code> domain so you can see changes live.</p>
-          </div>
-          <div class="p-8 rounded-2xl bg-slate-800/30 border border-slate-700/50 hover:border-indigo-500/50 transition duration-300">
-            <div class="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 mb-6">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <h3 class="text-xl font-bold mb-3 text-white">Test & Ship</h3>
-            <p class="text-slate-400 leading-relaxed">Once the temporary site looks perfect, swap it to your production domain with one click.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+  <!-- Hero Section -->
+  <section class="max-w-4xl mx-auto px-6 py-20 text-center flex-1 flex flex-col items-center justify-center">
+    <span class="text-xs uppercase tracking-widest text-indigo-400 font-semibold mb-3 px-3 py-1 bg-indigo-500/10 rounded-full border border-indigo-500/20">
+      Hosted Free on GitHub Pages
+    </span>
+    <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
+      Build and edit websites seamlessly with <span class="text-indigo-400">AI power</span>
+    </h1>
+    <p class="text-slate-400 text-base sm:text-lg mb-8 max-w-2xl leading-relaxed">
+      Welcome to your new website! Use the AI Prompt panel on the left to add features, adjust colors, or create entire sections in real-time.
+    </p>
+    <div class="flex flex-wrap gap-4 justify-center">
+      <button onclick="alert('Hello from your AI site!')" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6 py-3 rounded-xl shadow-lg transition">
+        Interactive Button
+      </button>
+      <a href="#features" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-6 py-3 rounded-xl border border-slate-700 transition">
+        Explore Features
+      </a>
+    </div>
+  </section>
 
   <!-- Footer -->
-  <footer class="border-t border-slate-800/60 bg-slate-900 py-10">
-    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500">
-      <div class="mb-4 md:mb-0 flex items-center space-x-2 opacity-50">
-        <div class="w-6 h-6 bg-slate-700 rounded flex items-center justify-center font-bold text-white text-[10px]">A</div>
-        <p>&copy; 2026 AI Deploy. Built for rapid iteration.</p>
-      </div>
-      <div class="flex space-x-6">
-        <a href="#" class="hover:text-indigo-400 transition">Terms</a>
-        <a href="#" class="hover:text-indigo-400 transition">Privacy</a>
-        <a href="#" class="hover:text-indigo-400 transition">GitHub</a>
-      </div>
-    </div>
+  <footer class="border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+    <p>&copy; 2026 MyBrand. Created with AI WebBuilder.</p>
   </footer>
 
-  <!-- Floating Notification (Toast) -->
-  <div id="copy-toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl border border-slate-700 translate-y-32 transition-all duration-500 opacity-0 pointer-events-none z-[100]">
-    Temporary URL copied to clipboard! 🚀
-  </div>
+</body>
+</html>`;
 
-  <script>
-    function generateNewStaging() {
-      const urlElement = document.getElementById('temp-url');
-      const toastElement = document.getElementById('deployment-toast');
-      const randomID = Math.random().toString(36).substring(2, 8);
+    // --- APPLICATION STATE ---
+    let monacoEditor = null;
+    let customApiKey = localStorage.getItem("GEMINI_CUSTOM_KEY") || "";
+
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // --- MONACO EDITOR INITIALIZATION ---
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.38.0/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+      monacoEditor = monaco.editor.create(document.getElementById('monacoEditorContainer'), {
+        value: defaultStarterHtml,
+        language: 'html',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        minimap: { enabled: false },
+        fontSize: 12,
+        tabSize: 2,
+        wordWrap: 'on',
+        scrollBeyondLastLine: false,
+        padding: { top: 10, bottom: 10 }
+      });
+
+      // Update preview on code edit with slight debounce
+      let debounceTimer;
+      monacoEditor.onDidChangeModelContent(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          refreshPreview();
+        }, 300);
+      });
+
+      // Initial render
+      refreshPreview();
+    });
+
+    // --- UPDATE LIVE PREVIEW IFRAME ---
+    function refreshPreview() {
+      if (!monacoEditor) return;
+      const iframe = document.getElementById('previewIframe');
+      const code = monacoEditor.getValue();
       
-      urlElement.innerHTML = `https://temp-${randomID}-deploy.webbuilder.ai`;
-      urlElement.classList.add('text-indigo-400');
-      
-      // Flash the "Staging synchronized" message
-      toastElement.classList.remove('hidden');
+      const blob = new Blob([code], { type: 'text/html' });
+      iframe.src = URL.createObjectURL(blob);
+    }
+
+    // --- AI EDIT COMMAND HANDLER ---
+    async function sendAiEditCommand() {
+      const promptInput = document.getElementById('aiPromptInput');
+      const userInstruction = promptInput.value.trim();
+
+      if (!userInstruction) {
+        showToast("Please enter an instruction for the AI editor.", "warning");
+        return;
+      }
+
+      const currentHtml = monacoEditor.getValue();
+      setLoadingState(true);
+
+      const systemPrompt = `You are an expert full-stack web designer and frontend developer.
+Your task is to update and return ONLY the raw full HTML code for the webpage based on the user's specific edit request.
+
+CRITICAL RULES:
+1. Return ONLY valid, complete single-file HTML (including standard Tailwind CSS scripts or inline CSS where applicable).
+2. DO NOT include markdown code fences (like \`\`\`html or \`\`\`), DO NOT add intro text, commentary, or explanations. Start immediately with <!DOCTYPE html> or <html> and end with </html>.
+3. Ensure all JavaScript logic, styling, and elements are working, interactive, and responsive.
+4. Maintain clean modern aesthetics, proper contrast, smooth layout, and responsive flex/grid layouts.
+5. Keep existing content intact unless requested otherwise.`;
+
+      const promptPayload = `CURRENT HTML CODE:
+${currentHtml}
+
+USER EDIT INSTRUCTION:
+${userInstruction}
+
+Please output the revised full HTML document reflecting these instructions:`;
+
+      try {
+        const apiKey = customApiKey || "";
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptPayload }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] }
+          })
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error?.message || `HTTP error ${response.status}`);
+        }
+
+        const data = await response.json();
+        let generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (generatedText) {
+          // Clean up markdown code block wrapping if model included it despite system prompt
+          generatedText = generatedText.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/, '').trim();
+
+          monacoEditor.setValue(generatedText);
+          refreshPreview();
+          promptInput.value = "";
+          showToast("Website updated successfully!", "success");
+        } else {
+          throw new Error("Invalid response format received from AI.");
+        }
+
+      } catch (err) {
+        console.error("AI Editing Error:", err);
+        showToast("Error updating site: " + err.message, "error");
+      } finally {
+        setLoadingState(false);
+      }
+    }
+
+    // --- QUICK PRESET PROMPT HELPER ---
+    function applyPresetPrompt(promptText) {
+      const promptInput = document.getElementById('aiPromptInput');
+      promptInput.value = promptText;
+      sendAiEditCommand();
+    }
+
+    // --- UI HELPERS & DEVICE EMULATION ---
+    function setDeviceView(mode) {
+      const wrapper = document.getElementById('previewFrameWrapper');
+      const btnDesktop = document.getElementById('btnDesktop');
+      const btnTablet = document.getElementById('btnTablet');
+      const btnMobile = document.getElementById('btnMobile');
+
+      // Reset active button classes
+      [btnDesktop, btnTablet, btnMobile].forEach(btn => {
+        btn.className = "px-2.5 py-1 rounded hover:text-slate-200 flex items-center gap-1 transition text-slate-400";
+      });
+
+      if (mode === 'desktop') {
+        wrapper.style.width = '100%';
+        wrapper.style.height = '100%';
+        btnDesktop.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-100 font-medium flex items-center gap-1 transition";
+      } else if (mode === 'tablet') {
+        wrapper.style.width = '768px';
+        wrapper.style.height = '100%';
+        btnTablet.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-100 font-medium flex items-center gap-1 transition";
+      } else if (mode === 'mobile') {
+        wrapper.style.width = '375px';
+        wrapper.style.height = '667px';
+        btnMobile.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-100 font-medium flex items-center gap-1 transition";
+      }
+    }
+
+    function setLoadingState(isLoading) {
+      const btn = document.getElementById('generateBtn');
+      const spinner = document.getElementById('btnSpinner');
+      const icon = document.getElementById('btnIcon');
+
+      btn.disabled = isLoading;
+      if (isLoading) {
+        spinner.classList.remove('hidden');
+        icon.classList.add('hidden');
+      } else {
+        spinner.classList.add('hidden');
+        icon.classList.remove('hidden');
+      }
+    }
+
+    function resetToStarterTemplate() {
+      if (confirm("Reset current editor code back to standard starter template?")) {
+        monacoEditor.setValue(defaultStarterHtml);
+        refreshPreview();
+        showToast("Template reset to default.", "info");
+      }
+    }
+
+    function copyCode() {
+      const code = monacoEditor.getValue();
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast("HTML code copied to clipboard!", "success");
+      } catch (err) {
+        showToast("Failed to copy code.", "error");
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function downloadCode() {
+      const code = monacoEditor.getValue();
+      const blob = new Blob([code], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Downloaded index.html! Ready for GitHub Pages.", "success");
+    }
+
+    // --- API KEY MODAL LOGIC ---
+    function toggleApiKeyModal() {
+      const modal = document.getElementById('apiKeyModal');
+      const input = document.getElementById('customApiKeyInput');
+      input.value = customApiKey;
+      modal.classList.toggle('hidden');
+    }
+
+    function saveCustomApiKey() {
+      const input = document.getElementById('customApiKeyInput');
+      customApiKey = input.value.trim();
+      localStorage.setItem("GEMINI_CUSTOM_KEY", customApiKey);
+      updateApiKeyStatusText();
+      toggleApiKeyModal();
+      showToast("Custom API key settings saved.", "success");
+    }
+
+    function clearCustomApiKey() {
+      customApiKey = "";
+      localStorage.removeItem("GEMINI_CUSTOM_KEY");
+      document.getElementById('customApiKeyInput').value = "";
+      updateApiKeyStatusText();
+      toggleApiKeyModal();
+      showToast("Cleared custom API key.", "info");
+    }
+
+    function updateApiKeyStatusText() {
+      const text = document.getElementById('apiKeyStatusText');
+      if (customApiKey) {
+        text.innerText = "Custom API Key Active";
+      } else {
+        text.innerText = "Default Key Configured";
+      }
+    }
+
+    function showToast(message, type = "info") {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.innerText = message;
+
+      if (type === 'success') {
+        toastIcon.setAttribute('data-lucide', 'check-circle-2');
+        toastIcon.className = 'w-4 h-4 text-emerald-400';
+      } else if (type === 'error') {
+        toastIcon.setAttribute('data-lucide', 'alert-circle');
+        toastIcon.className = 'w-4 h-4 text-rose-400';
+      } else {
+        toastIcon.setAttribute('data-lucide', 'info');
+        toastIcon.className = 'w-4 h-4 text-indigo-400';
+      }
+      lucide.createIcons();
+
+      toast.classList.remove('translate-y-10', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
       setTimeout(() => {
-        urlElement.classList.remove('text-indigo-400');
-        toastElement.classList.add('hidden');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-10', 'opacity-0');
       }, 3000);
     }
 
-    function copyUrl() {
-      const url = document.getElementById('temp-url').innerText;
-      const toast = document.getElementById('copy-toast');
-      
-      navigator.clipboard.writeText(url).then(() => {
-        toast.classList.remove('translate-y-32', 'opacity-0');
-        toast.classList.add('translate-y-0', 'opacity-100');
-        
-        setTimeout(() => {
-          toast.classList.add('translate-y-32', 'opacity-0');
-          toast.classList.remove('translate-y-0', 'opacity-100');
-        }, 2000);
-      });
-    }
-  </script>
+    // Keydown shortcut listener (Ctrl+Enter / Cmd+Enter to execute prompt)
+    document.getElementById('aiPromptInput').addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        sendAiEditCommand();
+      }
+    });
 
+    // Initialize API Status
+    updateApiKeyStatusText();
+  </script>
 </body>
-</html></html>
+</html>
