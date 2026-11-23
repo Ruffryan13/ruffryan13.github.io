@@ -1,5 +1,3 @@
-# Ryan Hub — GitHub Pages
-
 The static site is at the package root.
 
 ## Publish
