@@ -81,10 +81,10 @@ const appList = [
     name: "VLC in VS Code",
     category: "tools",
     icon: "▶",
-    tagline: "Media tools beside your code.",
+    tagline: "Play VLC media beside your code.",
     status: "Planned",
     state: "pending",
-    detail: "Your idea for a music and video player built into VS Code, using VLC.",
+    detail: "Use VLC, a media player, from inside VS Code, a programming app, so you can play music and videos while working with code.",
     footnote: "A static website cannot control a local VS Code or VLC installation; this needs a desktop extension."
   },
   {
