@@ -30,7 +30,7 @@ const motionAllowed=!window.matchMedia('(prefers-reduced-motion: reduce)').match
 if(motionAllowed){
   cards.forEach(card=>{
     card.addEventListener('pointermove',event=>{
-      const rect=card.getBoundingRect();
+      const rect=card.getBoundingClientRect();
       const x=(event.clientX-rect.left)/rect.width-.5;
       const y=(event.clientY-rect.top)/rect.height-.5;
       card.style.setProperty('--tilt-x',`${y*-4}deg`);
