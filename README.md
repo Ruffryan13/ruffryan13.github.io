@@ -18,9 +18,10 @@ Then open `http://localhost:8000`.
 
 - Search and filter the app cards by category.
 - Switch between dark and light themes.
+- Play local two-player chess with legal moves, castling, en passant, promotion, move history, and draw rules.
 - Save a quick note in this browser only.
 - Preview a sample lesson or note outline for a topic.
 - View the custom square, circle-safe `ruffryan13-world.png` illustration.
 - See which ideas need an account, provider, or desktop integration before they can work.
 
-The AI lesson and notes tools are previews, not connected AI services. Email, Google Calendar, OpenBot, cloud, remote desktop, and account features are not connected. Browser Games is waiting for the game list. No passwords or external account data are collected by this static preview.
+The chess game runs entirely in the browser and does not connect players over a network. The AI lesson and notes tools are previews, not connected AI services. Email, Google Calendar, OpenBot, cloud, remote desktop, and account features are not connected. No passwords or external account data are collected by this static preview.

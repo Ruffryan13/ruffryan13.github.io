@@ -11,15 +11,15 @@ const appList = [
     footnote: "AI lessons and generated tests are not connected in this preview. A secure AI service and your learning preferences will be needed."
   },
   {
-    id: "games",
-    name: "Browser Games",
+    id: "chess",
+    name: "Chess",
     category: "play",
-    icon: "▣",
-    tagline: "Your games, ready to launch.",
-    status: "Game list pending",
-    state: "pending",
-    detail: "A home for the browser games you choose. Add your list later and the launchpad can be organized around it.",
-    footnote: "No games are embedded yet because you said you’ll provide the list later."
+    icon: "♟",
+    tagline: "A complete two-player game, right here.",
+    status: "Ready to play",
+    state: "ready",
+    detail: "Play a full local game with legal moves, check and checkmate, castling, en passant, and pawn promotion.",
+    footnote: "Chess runs in this browser on one device. It does not use an account, send game data, or connect to a server."
   },
   {
     id: "openbot",
@@ -173,6 +173,10 @@ const dialog = document.querySelector("#app-dialog");
 const themeToggle = document.querySelector("#theme-toggle");
 let activeFilter = "all";
 let toastTimer;
+let chessGame;
+let selectedChessSquare = null;
+let chessBoardFlipped = false;
+let pendingPromotion = null;
 
 const descriptions = {
   learn: "Learn",
@@ -222,6 +226,7 @@ function setFilter(filter) {
 function openApp(id) {
   const app = appList.find((item) => item.id === id);
   if (!app) return;
+  dialog.classList.toggle("chess-dialog", app.id === "chess");
   document.querySelector("#dialog-icon").textContent = app.icon;
   document.querySelector("#dialog-kicker").textContent = `${descriptions[app.category].toUpperCase()} SPACE`;
   document.querySelector("#dialog-title").textContent = app.name;
@@ -231,7 +236,81 @@ function openApp(id) {
   const extra = document.querySelector("#dialog-extra");
   extra.innerHTML = "";
 
-  if (app.id === "notes") {
+  if (app.id === "chess") {
+    chessGame ||= new ChessGame();
+    selectedChessSquare = null;
+    pendingPromotion = null;
+    extra.innerHTML = `
+      <section class="chess-game" aria-label="Local two-player chess">
+        <div class="chess-toolbar">
+          <div class="chess-status-block">
+            <p class="chess-overline">LOCAL TWO-PLAYER</p>
+            <p class="chess-status" id="chess-status" role="status" aria-live="polite"></p>
+            <p class="chess-hint" id="chess-hint"></p>
+          </div>
+          <div class="chess-actions" role="group" aria-label="Game controls">
+            <button class="chess-control" id="chess-undo" type="button">Undo</button>
+            <button class="chess-control" id="chess-flip" type="button">Flip board</button>
+            <button class="chess-control chess-new-game" id="chess-new-game" type="button">New game</button>
+          </div>
+        </div>
+        <div class="chess-main-layout">
+          <div class="chess-board-wrap">
+            <div class="chess-board" id="chess-board" role="group" aria-label="Chess board"></div>
+          </div>
+          <aside class="chess-move-panel" aria-label="Move history">
+            <h3>Moves</h3>
+            <ol class="chess-move-list" id="chess-move-list"></ol>
+          </aside>
+        </div>
+        <div class="chess-promotion" id="chess-promotion" hidden>
+          <span>Promote pawn to</span>
+          <div class="chess-promotion-options" role="group" aria-label="Choose promotion piece">
+            <button class="chess-promotion-choice" type="button" data-promotion="q" aria-label="Promote to queen">♕</button>
+            <button class="chess-promotion-choice" type="button" data-promotion="r" aria-label="Promote to rook">♖</button>
+            <button class="chess-promotion-choice" type="button" data-promotion="b" aria-label="Promote to bishop">♗</button>
+            <button class="chess-promotion-choice" type="button" data-promotion="n" aria-label="Promote to knight">♘</button>
+          </div>
+        </div>
+        <div class="chess-draw-claim" id="chess-draw-claim" hidden>
+          <span id="chess-draw-reason"></span>
+          <button class="chess-control" id="chess-claim-button" type="button">Claim draw</button>
+        </div>
+      </section>`;
+    const board = extra.querySelector("#chess-board");
+    board.addEventListener("click", handleChessBoardClick);
+    extra.querySelector("#chess-undo").addEventListener("click", () => {
+      if (chessGame.undo()) {
+        selectedChessSquare = null;
+        pendingPromotion = null;
+        renderChessGame();
+      }
+    });
+    extra.querySelector("#chess-flip").addEventListener("click", () => {
+      chessBoardFlipped = !chessBoardFlipped;
+      renderChessGame();
+    });
+    extra.querySelector("#chess-new-game").addEventListener("click", () => {
+      if (chessGame.history.length && !window.confirm("Start a new game and discard this game?")) return;
+      chessGame.reset();
+      selectedChessSquare = null;
+      pendingPromotion = null;
+      renderChessGame();
+    });
+    extra.querySelector("#chess-promotion").addEventListener("click", (event) => {
+      const choice = event.target.closest("[data-promotion]");
+      if (choice && pendingPromotion) {
+        finishChessMove(choice.dataset.promotion);
+      }
+    });
+    extra.querySelector("#chess-claim-button").addEventListener("click", () => {
+      if (chessGame.claimDraw()) {
+        selectedChessSquare = null;
+        renderChessGame();
+      }
+    });
+    renderChessGame();
+  } else if (app.id === "notes") {
     const savedNote = localStorage.getItem("ruffryan13-note") || "";
     extra.innerHTML = `
       <div class="module-box">
@@ -274,6 +353,126 @@ function openApp(id) {
 
   dialog.showModal();
 }
+
+function handleChessBoardClick(event) {
+  const squareButton = event.target.closest("[data-square]");
+  if (!squareButton || pendingPromotion) return;
+  const square = Number(squareButton.dataset.square);
+  if (selectedChessSquare !== null) {
+    const targetMoves = chessGame.legalMoves(selectedChessSquare)
+      .filter((move) => move.to === square);
+    if (targetMoves.length) {
+      const result = chessGame.move(selectedChessSquare, square);
+      if (result.promotionRequired) {
+        pendingPromotion = { from: selectedChessSquare, to: square };
+        document.querySelector("#chess-promotion").hidden = false;
+        document.querySelector("#chess-promotion").querySelector("[data-promotion='q']").focus();
+        return;
+      }
+      if (result.ok) {
+        selectedChessSquare = null;
+        renderChessGame(square);
+        return;
+      }
+    }
+  }
+
+  const piece = chessGame.board[square];
+  const isCurrentPlayersPiece = piece
+    && (piece === piece.toUpperCase() ? "w" : "b") === chessGame.turn;
+  selectedChessSquare = isCurrentPlayersPiece ? square : null;
+  renderChessGame(selectedChessSquare);
+}
+
+function finishChessMove(promotion) {
+  if (!pendingPromotion) return;
+  const { from, to } = pendingPromotion;
+  const result = chessGame.move(from, to, promotion);
+  pendingPromotion = null;
+  document.querySelector("#chess-promotion").hidden = true;
+  if (result.ok) {
+    selectedChessSquare = null;
+    renderChessGame(to);
+  } else {
+    renderChessGame();
+  }
+}
+
+function renderChessGame(focusSquare = null) {
+  const extra = document.querySelector("#dialog-extra");
+  const board = extra.querySelector("#chess-board");
+  if (!board) return;
+  const state = chessGame.state();
+  const lastRecord = chessGame.history[chessGame.history.length - 1];
+  const lastMove = lastRecord ? lastRecord.move : null;
+  const legalMoves = selectedChessSquare === null ? [] : chessGame.legalMoves(selectedChessSquare);
+  const order = Array.from({ length: 64 }, (_, index) => chessBoardFlipped ? 63 - index : index);
+  const glyphs = {
+    K: "♔", Q: "♕", R: "♖", B: "♗", N: "♘", P: "♙",
+    k: "♚", q: "♛", r: "♜", b: "♝", n: "♞", p: "♟"
+  };
+  const names = { K: "White king", Q: "White queen", R: "White rook", B: "White bishop", N: "White knight", P: "White pawn",
+    k: "Black king", q: "Black queen", r: "Black rook", b: "Black bishop", n: "Black knight", p: "Black pawn" };
+
+  board.innerHTML = order.map((square) => {
+    const row = Math.floor(square / 8);
+    const file = square % 8;
+    const piece = chessGame.board[square];
+    const isLight = (row + file) % 2 === 1;
+    const isLegal = legalMoves.some((move) => move.to === square);
+    const isCapture = isLegal && Boolean(chessGame.board[square] || legalMoves.some((move) => move.to === square && move.enPassant));
+    const isSelected = selectedChessSquare === square;
+    const isLastMove = lastMove && (lastMove.from === square || lastMove.to === square);
+    const checkedKing = state.inCheck && piece === (state.turn === "w" ? "K" : "k");
+    const displayRow = chessBoardFlipped ? 7 - row : row;
+    const displayFile = chessBoardFlipped ? 7 - file : file;
+    const classes = [
+      "chess-square",
+      isLight ? "light-square" : "dark-square",
+      isSelected ? "is-selected" : "",
+      isLegal ? "is-legal" : "",
+      isCapture ? "is-capture" : "",
+      isLastMove ? "is-last-move" : "",
+      checkedKing ? "is-check" : ""
+    ].filter(Boolean).join(" ");
+    const label = piece
+      ? `${names[piece]}, ${FILES_CHESS[file]}${8 - row}`
+      : `${FILES_CHESS[file]}${8 - row}, ${isLight ? "light" : "dark"} square`;
+    return `<button class="${classes}" type="button" data-square="${square}" data-file-label="${displayRow === 7 ? FILES_CHESS[displayFile] : ""}" data-rank-label="${displayFile === 0 ? 8 - displayRow : ""}" aria-label="${label}" aria-pressed="${isSelected}">
+      ${displayFile === 0 ? `<span class="chess-rank" aria-hidden="true">${8 - displayRow}</span>` : ""}
+      ${displayRow === 7 ? `<span class="chess-file" aria-hidden="true">${FILES_CHESS[displayFile]}</span>` : ""}
+      ${piece ? `<span class="chess-piece ${piece === piece.toUpperCase() ? "white-piece" : "black-piece"}" aria-hidden="true">${glyphs[piece]}</span>` : ""}
+    </button>`;
+  }).join("");
+
+  document.querySelector("#chess-status").textContent = state.label;
+  document.querySelector("#chess-hint").textContent = state.checkmate || state.draw
+    ? "Start a new game whenever you’re ready."
+    : state.claimableDraw
+      ? `A ${state.claimableDraw} draw can be claimed.`
+      : state.inCheck
+        ? "Your king is in check. Choose a legal response."
+        : "Select a piece to see its legal moves.";
+  extra.querySelector("#chess-undo").disabled = chessGame.history.length === 0;
+  extra.querySelector("#chess-draw-claim").hidden = !state.claimableDraw || state.draw;
+  extra.querySelector("#chess-draw-reason").textContent = state.claimableDraw
+    ? `Draw available: ${state.claimableDraw}`
+    : "";
+  const moveList = extra.querySelector("#chess-move-list");
+  const movePairs = [];
+  for (let index = 0; index < chessGame.history.length; index += 2) {
+    const white = chessGame.history[index];
+    const black = chessGame.history[index + 1];
+    movePairs.push(`<li><span class="chess-move-number">${Math.floor(index / 2) + 1}.</span><span>${white.san}</span><span>${black ? black.san : ""}</span></li>`);
+  }
+  moveList.innerHTML = movePairs.join("");
+  moveList.scrollTop = moveList.scrollHeight;
+  const promotion = extra.querySelector("#chess-promotion");
+  if (!pendingPromotion) promotion.hidden = true;
+  if (focusSquare !== null) board.querySelector(`[data-square="${focusSquare}"]`)?.focus();
+}
+
+const FILES_CHESS = "abcdefgh";
 
 function showToast(message) {
   const toast = document.querySelector("#toast");
