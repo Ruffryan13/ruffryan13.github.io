@@ -7,9 +7,10 @@
     <meta name="description" content="Ruffryan13 Projects — a personal hub for learning, games, and useful tools.">
     <title>Ruffryan13 Projects</title>
     <link rel="icon" href="ruffryan13-world.png" type="image/png">
-    <link rel="stylesheet" href="styles.css?v=4c70fb8">
-    <script src="chess.js?v=4c70fb8" defer></script>
-    <script src="app.js?v=vlc-card-20261124" defer></script>
+    <link rel="stylesheet" href="styles.css?v=chess-bot-20261124">
+    <script src="chess.js?v=chess-bot-20261124" defer></script>
+    <script src="app.js?v=chess-bot-20261124" defer></script>
+    <script src="chess-bot-addon.js?v=chess-bot-20261124" defer></script>
   </head>
   <body>
     <div class="app-shell">
@@ -18,7 +19,6 @@
           <span class="brand-mark">R<span>13</span></span>
           <span class="brand-copy"><strong>ruffryan13</strong><small>PROJECTS HUB</small></span>
         </a>
-
         <div class="side-label">WORKSPACE</div>
         <nav class="side-nav">
           <button class="nav-item active" data-filter="all"><span>◈</span> Overview</button>
@@ -27,105 +27,34 @@
           <button class="nav-item" data-filter="tools"><span>⌘</span> Tools</button>
           <button class="nav-item" data-filter="connect"><span>⌁</span> Connect</button>
         </nav>
-
         <div class="side-spacer"></div>
-        <div class="sidebar-note">
-          <span class="note-spark">✳</span>
-          <p>A little corner of the web, made for you.</p>
-        </div>
+        <div class="sidebar-note"><span class="note-spark">✳</span><p>A little corner of the web, made for you.</p></div>
         <button class="nav-item side-settings" data-open="settings"><span>⚙</span> Settings</button>
-        <div class="profile-chip">
-          <span class="avatar">R</span>
-          <span><strong>Ruffryan13</strong><small>Personal space</small></span>
-          <span class="profile-dot" aria-label="Offline preview"></span>
-        </div>
+        <div class="profile-chip"><span class="avatar">R</span><span><strong>Ruffryan13</strong><small>Personal space</small></span><span class="profile-dot" aria-label="Offline preview"></span></div>
       </aside>
-
       <main class="main-content">
         <header class="topbar">
           <div class="breadcrumbs"><span>Workspace</span><i>/</i><strong id="crumb-current">Overview</strong></div>
           <div class="top-actions">
-            <label class="search-box">
-              <span aria-hidden="true">⌕</span>
-              <input id="app-search" type="search" placeholder="Find an app..." aria-label="Find an app">
-              <kbd>/</kbd>
-            </label>
+            <label class="search-box"><span aria-hidden="true">⌕</span><input id="app-search" type="search" placeholder="Find an app..." aria-label="Find an app"><kbd>/</kbd></label>
             <button class="icon-button" id="theme-toggle" aria-label="Switch to light theme" title="Toggle theme">☼</button>
-            <button class="icon-button notification-button" id="notification-toggle" aria-label="Show notifications" title="Notifications">
-              ♧<span class="notification-dot"></span>
-            </button>
+            <button class="icon-button notification-button" id="notification-toggle" aria-label="Show notifications" title="Notifications">♧<span class="notification-dot"></span></button>
             <button class="user-button" data-open="login"><span class="avatar small">R</span><span>Sign in</span><span aria-hidden="true">⌄</span></button>
           </div>
         </header>
-
         <div class="page-wrap">
           <section class="welcome-row">
-            <div class="welcome-copy">
-              <div class="eyebrow"><span class="live-pip"></span> YOUR PERSONAL LAUNCHPAD</div>
-              <h1>Make room for <em>what’s next.</em></h1>
-              <p>Learn something new, jump into a game, or open a tool. Your projects, all in one place.</p>
-              <div class="welcome-actions">
-                <a class="button button-primary" href="#launchpad">Explore your apps <span aria-hidden="true">↘</span></a>
-                <button class="button button-quiet" data-open="notes">✎ &nbsp;Quick note</button>
-              </div>
-            </div>
-            <div class="hero-art-wrap">
-              <div class="art-glow"></div>
-              <img class="hero-art" src="ruffryan13-world.png" alt="Square, circle-safe pixel-art computer overlooking a colorful block-built world">
-              <span class="art-caption">BUILD YOUR OWN WORLD <b>✳</b></span>
-            </div>
+            <div class="welcome-copy"><div class="eyebrow"><span class="live-pip"></span> YOUR PERSONAL LAUNCHPAD</div><h1>Make room for <em>what’s next.</em></h1><p>Learn something new, jump into a game, or open a tool. Your projects, all in one place.</p><div class="welcome-actions"><a class="button button-primary" href="#launchpad">Explore your apps <span aria-hidden="true">↘</span></a><button class="button button-quiet" data-open="notes">✎ &nbsp;Quick note</button></div></div>
+            <div class="hero-art-wrap"><div class="art-glow"></div><img class="hero-art" src="ruffryan13-world.png" alt="Square, circle-safe pixel-art computer overlooking a colorful block-built world"><span class="art-caption">BUILD YOUR OWN WORLD <b>✳</b></span></div>
           </section>
-
-          <section class="quick-strip" aria-label="Quick status">
-            <div class="quick-item"><span class="quick-icon purple">✦</span><span><strong>Curiosity mode</strong><small>Ready when you are</small></span></div>
-            <div class="quick-divider"></div>
-            <div class="quick-item"><span class="quick-icon green">▣</span><span><strong>Game shelf</strong><small id="game-status">Chess is ready to play</small></span></div>
-            <div class="quick-divider"></div>
-            <div class="quick-item"><span class="quick-icon orange">☁</span><span><strong>Connected services</strong><small>None connected yet</small></span></div>
-            <button class="strip-arrow" data-open="settings" aria-label="Open settings">↗</button>
-          </section>
-
-          <section class="launch-section" id="launchpad">
-            <div class="section-heading">
-              <div>
-                <div class="eyebrow">THE GOOD STUFF</div>
-                <h2 id="section-title">Your launchpad<span class="heading-dot">.</span></h2>
-              </div>
-              <div class="view-controls" role="group" aria-label="Filter apps">
-                <button class="filter-chip selected" data-filter="all" aria-pressed="true">All apps <span id="app-count">15</span></button>
-                <button class="filter-chip" data-filter="learn" aria-pressed="false">Learn</button>
-                <button class="filter-chip" data-filter="play" aria-pressed="false">Play</button>
-                <button class="filter-chip" data-filter="tools" aria-pressed="false">Tools</button>
-                <button class="filter-chip" data-filter="connect" aria-pressed="false">Connect</button>
-              </div>
-            </div>
-            <div class="app-grid" id="app-grid" aria-live="polite"></div>
-            <p class="empty-state" id="empty-state" hidden>No apps match that search. Try another word.</p>
-          </section>
-
-          <footer class="page-footer">
-            <span>RUFFRYAN13 PROJECTS <b>•</b> YOUR SPACE ON THE WEB</span>
-            <span>Preview build <i>—</i> integrations need setup</span>
-          </footer>
+          <section class="quick-strip" aria-label="Quick status"><div class="quick-item"><span class="quick-icon purple">✦</span><span><strong>Curiosity mode</strong><small>Ready when you are</small></span></div><div class="quick-divider"></div><div class="quick-item"><span class="quick-icon green">▣</span><span><strong>Game shelf</strong><small id="game-status">Chess is ready to play</small></span></div><div class="quick-divider"></div><div class="quick-item"><span class="quick-icon orange">☁</span><span><strong>Connected services</strong><small>None connected yet</small></span></div><button class="strip-arrow" data-open="settings" aria-label="Open settings">↗</button></section>
+          <section class="launch-section" id="launchpad"><div class="section-heading"><div><div class="eyebrow">THE GOOD STUFF</div><h2 id="section-title">Your launchpad<span class="heading-dot">.</span></h2></div><div class="view-controls" role="group" aria-label="Filter apps"><button class="filter-chip selected" data-filter="all" aria-pressed="true">All apps <span id="app-count">15</span></button><button class="filter-chip" data-filter="learn" aria-pressed="false">Learn</button><button class="filter-chip" data-filter="play" aria-pressed="false">Play</button><button class="filter-chip" data-filter="tools" aria-pressed="false">Tools</button><button class="filter-chip" data-filter="connect" aria-pressed="false">Connect</button></div></div><div class="app-grid" id="app-grid" aria-live="polite"></div><p class="empty-state" id="empty-state" hidden>No apps match that search. Try another word.</p></section>
+          <footer class="page-footer"><span>RUFFRYAN13 PROJECTS <b>•</b> YOUR SPACE ON THE WEB</span><span>Preview build <i>—</i> integrations need setup</span></footer>
         </div>
       </main>
     </div>
-
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <div class="notification-popover" id="notification-popover" hidden>
-      <div class="popover-heading"><strong>Notifications</strong><button id="close-notifications" aria-label="Close notifications">×</button></div>
-      <p class="notification-empty">You’re all caught up.<br><span>Updates will show here when services are connected.</span></p>
-    </div>
-
-    <dialog class="app-dialog" id="app-dialog" aria-labelledby="dialog-title">
-      <button class="dialog-close" id="dialog-close" aria-label="Close">×</button>
-      <div class="dialog-icon" id="dialog-icon">✦</div>
-      <div class="eyebrow" id="dialog-kicker">APP PREVIEW</div>
-      <h2 id="dialog-title">App details</h2>
-      <div class="dialog-status" id="dialog-status"></div>
-      <p class="dialog-description" id="dialog-description"></p>
-      <div id="dialog-extra"></div>
-      <div class="dialog-footnote" id="dialog-footnote"></div>
-    </dialog>
+    <div class="notification-popover" id="notification-popover" hidden><div class="popover-heading"><strong>Notifications</strong><button id="close-notifications" aria-label="Close notifications">×</button></div><p class="notification-empty">You’re all caught up.<br><span>Updates will show here when services are connected.</span></p></div>
+    <dialog class="app-dialog" id="app-dialog" aria-labelledby="dialog-title"><button class="dialog-close" id="dialog-close" aria-label="Close">×</button><div class="dialog-icon" id="dialog-icon">✦</div><div class="eyebrow" id="dialog-kicker">APP PREVIEW</div><h2 id="dialog-title">App details</h2><div class="dialog-status" id="dialog-status"></div><p class="dialog-description" id="dialog-description"></p><div id="dialog-extra"></div><div class="dialog-footnote" id="dialog-footnote"></div></dialog>
   </body>
 </html>
