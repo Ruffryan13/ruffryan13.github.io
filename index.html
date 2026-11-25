@@ -20,4 +20,78 @@ html{scroll-behavior:smooth}.welcome-copy{animation:fadeUp .72s cubic-bezier(.22
 <div class="toast" id="toast" role="status" aria-live="polite"></div><div class="notification-popover" id="notification-popover" hidden><div class="popover-heading"><strong>Notifications</strong><button id="close-notifications" aria-label="Close notifications">×</button></div><p class="notification-empty">You’re all caught up.<br><span>Updates will show here when services are connected.</span></p></div>
 <dialog class="app-dialog" id="app-dialog" aria-labelledby="dialog-title"><button class="dialog-close" id="dialog-close" aria-label="Close">×</button><div class="dialog-icon" id="dialog-icon">✦</div><div class="eyebrow" id="dialog-kicker">APP PREVIEW</div><h2 id="dialog-title">App details</h2><div class="dialog-status" id="dialog-status"></div><p class="dialog-description" id="dialog-description"></p><div id="dialog-extra"></div><div class="dialog-footnote" id="dialog-footnote"></div></dialog>
 <script>(()=>{const grid=document.querySelector('#app-grid');function stagger(){grid?.querySelectorAll('.app-card').forEach((c,i)=>c.style.setProperty('--app-delay',`${Math.min(i*55,330)}ms`))}const o=new MutationObserver(stagger);if(grid)o.observe(grid,{childList:true});stagger();document.addEventListener('click',e=>{const t=e.target.closest('button,.button,a');if(!t||matchMedia('(prefers-reduced-motion: reduce)').matches)return;t.animate([{transform:'scale(1)'},{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:180,easing:'cubic-bezier(.22,1,.36,1)'})});document.querySelectorAll('[data-filter]').forEach(b=>b.addEventListener('click',()=>setTimeout(stagger,20)));document.querySelector('#app-search')?.addEventListener('input',()=>setTimeout(stagger,20))})();</script>
+<style>
+.login-panel{margin-top:14px;padding:17px;border:1px solid var(--line);border-radius:12px;background:var(--page)}
+.login-form{display:grid;gap:12px}
+.login-field{display:grid;gap:6px;color:var(--muted);font-size:10px;font-weight:650}
+.login-field input{width:100%;min-height:40px;padding:0 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;font-weight:400}
+.login-password-wrap{display:flex;gap:7px}
+.login-password-wrap input{min-width:0}
+.login-password-toggle{padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--muted);cursor:pointer;font-size:10px}
+.login-submit{width:100%;min-height:40px;margin-top:3px;border:0;border-radius:8px;background:var(--purple-bright);color:#fff;cursor:pointer;font-size:11px;font-weight:750}
+.login-submit:hover{background:#a18bff}
+.login-feedback{min-height:1.5em;margin:0;color:var(--mint);font-size:10px;line-height:1.5}
+.login-signup{margin-top:15px;padding-top:13px;border-top:1px solid var(--line);color:var(--muted);font-size:10px;line-height:1.55}
+.login-signup button{display:block;width:100%;min-height:38px;margin-top:8px;border:1px solid var(--line);border-radius:8px;background:var(--panel-2);color:var(--quiet);font-size:10px;font-weight:700}
+.login-signup p{margin:7px 0 0;color:var(--quiet)}
+.login-submit:focus-visible,.login-password-toggle:focus-visible,.login-signup button:focus-visible{outline:2px solid var(--purple);outline-offset:3px}
+</style>
+<script>
+document.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) return;
+  const trigger = event.target.closest('[data-open="login"], [data-app="login"]');
+  if (!trigger) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  const dialog = document.querySelector("#app-dialog");
+  const extra = document.querySelector("#dialog-extra");
+  dialog.classList.remove("chess-dialog");
+  document.querySelector("#dialog-icon").textContent = "⌑";
+  document.querySelector("#dialog-kicker").textContent = "ACCOUNT ACCESS";
+  document.querySelector("#dialog-title").textContent = "Welcome back";
+  document.querySelector("#dialog-status").textContent = "Sign-in preview";
+  document.querySelector("#dialog-description").textContent = "Sign in to your Ruffryan13 Projects account.";
+  document.querySelector("#dialog-footnote").textContent = "Account sign-in is not connected yet. This preview does not send or save your credentials.";
+  extra.innerHTML = `
+    <section class="login-panel" aria-label="Sign in">
+      <form class="login-form" id="login-form">
+        <label class="login-field" for="login-email">Email address
+          <input id="login-email" name="email" type="email" autocomplete="username" required autofocus>
+        </label>
+        <label class="login-field" for="login-password">Password
+          <span class="login-password-wrap">
+            <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+            <button class="login-password-toggle" id="login-password-toggle" type="button" aria-pressed="false">Show</button>
+          </span>
+        </label>
+        <button class="login-submit" type="submit">Sign in</button>
+        <p class="login-feedback" id="login-feedback" role="status" aria-live="polite"></p>
+      </form>
+      <div class="login-signup">
+        <span>New here?</span>
+        <button type="button" disabled aria-disabled="true">Sign-up disabled</button>
+        <p>New registrations are blocked by the admin for now.</p>
+      </div>
+    </section>`;
+  dialog.showModal();
+}, true);
+
+document.addEventListener("click", (event) => {
+  if (!(event.target instanceof Element)) return;
+  const toggle = event.target.closest("#login-password-toggle");
+  if (!toggle) return;
+  const password = document.querySelector("#login-password");
+  const visible = password.type === "password";
+  password.type = visible ? "text" : "password";
+  toggle.textContent = visible ? "Hide" : "Show";
+  toggle.setAttribute("aria-pressed", String(visible));
+});
+
+document.addEventListener("submit", (event) => {
+  if (!(event.target instanceof HTMLFormElement) || event.target.id !== "login-form") return;
+  event.preventDefault();
+  document.querySelector("#login-feedback").textContent = "Sign-in is not connected yet. No information was sent or saved.";
+});
+</script>
 </body></html>
