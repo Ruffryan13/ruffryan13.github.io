@@ -158,11 +158,22 @@ const appList = [
     name: "Login / Sign up",
     category: "connect",
     icon: "⌑",
-    tagline: "A personal account, when ready.",
-    status: "Preview only",
+    tagline: "Sign in to the test account.",
+    status: "Test login",
     state: "pending",
-    detail: "Account screens can be added when you choose how the site should securely store accounts.",
-    footnote: "This preview does not collect passwords or create accounts."
+    detail: "Use the demo account for this preview. Sign-up is blocked and the account has no privileges.",
+    footnote: "This is a static test login, not a secure account system. Credentials are checked in this browser and are not sent to a server."
+  },
+  {
+    id: "provider-setup",
+    name: "Provider Setup",
+    category: "connect",
+    icon: "⚡",
+    tagline: "Add the settings your integrations need.",
+    status: "Setup available",
+    state: "pending",
+    detail: "A guided place to record non-secret provider configuration before a secure OAuth/backend connector is added.",
+    footnote: "Configuration is saved only in this browser. Never paste client secrets, passwords, or access tokens here."
   }
 ];
 
@@ -190,9 +201,8 @@ function renderApps() {
   const query = searchInput.value.trim().toLowerCase();
   const visible = appList.filter((app) => {
     const matchesFilter = activeFilter === "all" || app.category === activeFilter;
-    const matchesQuery = `${app.name} ${app.tagline} ${app.status} ${app.category} ${app.detail} ${app.footnote}`
-      .toLowerCase()
-      .includes(query);
+    const searchableText = `${app.name} ${app.category} ${app.tagline} ${app.status} ${app.detail} ${app.footnote}`.toLowerCase();
+    const matchesQuery = searchableText.includes(query);
     return matchesFilter && matchesQuery;
   });
 
@@ -218,7 +228,11 @@ function setFilter(filter) {
     const selected = button.dataset.filter === filter;
     button.classList.toggle("active", selected && button.classList.contains("nav-item"));
     button.classList.toggle("selected", selected && button.classList.contains("filter-chip"));
-    if (button.classList.contains("filter-chip")) button.setAttribute("aria-pressed", String(selected));
+    button.setAttribute("aria-pressed", String(selected));
+    if (button.classList.contains("nav-item")) {
+      if (selected) button.setAttribute("aria-current", "page");
+      else button.removeAttribute("aria-current");
+    }
   });
   document.querySelector("#crumb-current").textContent = descriptions[filter] || "Overview";
   document.querySelector("#section-title").innerHTML = `${filter === "all" ? "Your launchpad" : descriptions[filter]}<span class="heading-dot">.</span>`;
@@ -246,7 +260,7 @@ function openApp(id) {
       <section class="chess-game" aria-label="Local two-player chess">
         <div class="chess-toolbar">
           <div class="chess-status-block">
-            <p class="chess-overline" id="chess-overline">LOCAL TWO-PLAYER</p>
+            <p class="chess-overline">LOCAL TWO-PLAYER</p>
             <p class="chess-status" id="chess-status" role="status" aria-live="polite"></p>
             <p class="chess-hint" id="chess-hint"></p>
           </div>
@@ -313,7 +327,7 @@ function openApp(id) {
     });
     renderChessGame();
   } else if (app.id === "notes") {
-    const savedNote = readBrowserSetting("ruffryan13-note");
+    const savedNote = localStorage.getItem("ruffryan13-note") || "";
     extra.innerHTML = `
       <div class="module-box">
         <label for="note-text">Your quick note</label>
@@ -321,15 +335,10 @@ function openApp(id) {
         <button class="button button-primary" id="save-note" type="button">Save on this device</button>
         <p class="local-note">Private to this browser. Clearing site data removes it.</p>
       </div>`;
-    extra.querySelector("#note-text").value = savedNote.value || "";
-    if (!savedNote.available) {
-      extra.querySelector(".local-note").textContent = "Browser storage is blocked; this note will not persist.";
-    }
+    extra.querySelector("#note-text").value = savedNote;
     extra.querySelector("#save-note").addEventListener("click", () => {
-      const saved = writeBrowserSetting("ruffryan13-note", extra.querySelector("#note-text").value);
-      showToast(saved
-        ? "Note saved in this browser."
-        : "Browser storage is unavailable; the note was not saved.");
+      localStorage.setItem("ruffryan13-note", extra.querySelector("#note-text").value);
+      showToast("Note saved in this browser.");
     });
   } else if (app.id === "study" || app.id === "ai-notes") {
     extra.innerHTML = `
@@ -489,51 +498,32 @@ function showToast(message) {
   toastTimer = setTimeout(() => toast.classList.remove("visible"), 2400);
 }
 
-function readBrowserSetting(key) {
-  try {
-    return { value: localStorage.getItem(key), available: true };
-  } catch (error) {
-    if (error?.name === "SecurityError" || error?.name === "QuotaExceededError") {
-      return { value: null, available: false };
-    }
-    throw error;
-  }
-}
-
-function writeBrowserSetting(key, value) {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch (error) {
-    if (error?.name === "SecurityError" || error?.name === "QuotaExceededError") {
-      return false;
-    }
-    throw error;
-  }
-}
-
 function toggleTheme() {
   const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
-  const saved = writeBrowserSetting("ruffryan13-theme", next);
+  try {
+    localStorage.setItem("ruffryan13-theme", next);
+  } catch (error) {
+    showToast("Theme changed for this visit, but browser storage is unavailable.");
+  }
   themeToggle.setAttribute("aria-label", `Switch to ${next === "dark" ? "light" : "dark"} theme`);
   themeToggle.textContent = next === "dark" ? "☼" : "☾";
   const dialogButton = document.querySelector("#dialog-theme-toggle");
   if (dialogButton) dialogButton.textContent = next === "dark" ? "Dark" : "Light";
-  if (!saved) showToast("Theme changed, but browser storage is unavailable; it won't persist.");
 }
 
 function initializeTheme() {
-  const preference = readBrowserSetting("ruffryan13-theme");
-  const stored = preference.value;
+  let stored = null;
+  try {
+    stored = localStorage.getItem("ruffryan13-theme");
+  } catch (error) {
+    // Keep the default theme when browser storage is blocked.
+  }
   if (stored === "dark" || stored === "light") {
     document.documentElement.dataset.theme = stored;
   }
   themeToggle.textContent = document.documentElement.dataset.theme === "dark" ? "☼" : "☾";
   themeToggle.setAttribute("aria-label", `Switch to ${document.documentElement.dataset.theme === "dark" ? "light" : "dark"} theme`);
-  if (!preference.available) {
-    showToast("Browser storage is unavailable; theme changes won't persist.");
-  }
 }
 
 document.addEventListener("click", (event) => {
