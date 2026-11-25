@@ -190,7 +190,9 @@ function renderApps() {
   const query = searchInput.value.trim().toLowerCase();
   const visible = appList.filter((app) => {
     const matchesFilter = activeFilter === "all" || app.category === activeFilter;
-    const matchesQuery = `${app.name} ${app.tagline} ${app.status}`.toLowerCase().includes(query);
+    const matchesQuery = `${app.name} ${app.tagline} ${app.status} ${app.category} ${app.detail} ${app.footnote}`
+      .toLowerCase()
+      .includes(query);
     return matchesFilter && matchesQuery;
   });
 
@@ -311,7 +313,7 @@ function openApp(id) {
     });
     renderChessGame();
   } else if (app.id === "notes") {
-    const savedNote = localStorage.getItem("ruffryan13-note") || "";
+    const savedNote = readBrowserSetting("ruffryan13-note");
     extra.innerHTML = `
       <div class="module-box">
         <label for="note-text">Your quick note</label>
@@ -319,10 +321,15 @@ function openApp(id) {
         <button class="button button-primary" id="save-note" type="button">Save on this device</button>
         <p class="local-note">Private to this browser. Clearing site data removes it.</p>
       </div>`;
-    extra.querySelector("#note-text").value = savedNote;
+    extra.querySelector("#note-text").value = savedNote.value || "";
+    if (!savedNote.available) {
+      extra.querySelector(".local-note").textContent = "Browser storage is blocked; this note will not persist.";
+    }
     extra.querySelector("#save-note").addEventListener("click", () => {
-      localStorage.setItem("ruffryan13-note", extra.querySelector("#note-text").value);
-      showToast("Note saved in this browser.");
+      const saved = writeBrowserSetting("ruffryan13-note", extra.querySelector("#note-text").value);
+      showToast(saved
+        ? "Note saved in this browser."
+        : "Browser storage is unavailable; the note was not saved.");
     });
   } else if (app.id === "study" || app.id === "ai-notes") {
     extra.innerHTML = `
@@ -482,23 +489,51 @@ function showToast(message) {
   toastTimer = setTimeout(() => toast.classList.remove("visible"), 2400);
 }
 
+function readBrowserSetting(key) {
+  try {
+    return { value: localStorage.getItem(key), available: true };
+  } catch (error) {
+    if (error?.name === "SecurityError" || error?.name === "QuotaExceededError") {
+      return { value: null, available: false };
+    }
+    throw error;
+  }
+}
+
+function writeBrowserSetting(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch (error) {
+    if (error?.name === "SecurityError" || error?.name === "QuotaExceededError") {
+      return false;
+    }
+    throw error;
+  }
+}
+
 function toggleTheme() {
   const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
   document.documentElement.dataset.theme = next;
-  localStorage.setItem("ruffryan13-theme", next);
+  const saved = writeBrowserSetting("ruffryan13-theme", next);
   themeToggle.setAttribute("aria-label", `Switch to ${next === "dark" ? "light" : "dark"} theme`);
   themeToggle.textContent = next === "dark" ? "☼" : "☾";
   const dialogButton = document.querySelector("#dialog-theme-toggle");
   if (dialogButton) dialogButton.textContent = next === "dark" ? "Dark" : "Light";
+  if (!saved) showToast("Theme changed, but browser storage is unavailable; it won't persist.");
 }
 
 function initializeTheme() {
-  const stored = localStorage.getItem("ruffryan13-theme");
+  const preference = readBrowserSetting("ruffryan13-theme");
+  const stored = preference.value;
   if (stored === "dark" || stored === "light") {
     document.documentElement.dataset.theme = stored;
   }
   themeToggle.textContent = document.documentElement.dataset.theme === "dark" ? "☼" : "☾";
   themeToggle.setAttribute("aria-label", `Switch to ${document.documentElement.dataset.theme === "dark" ? "light" : "dark"} theme`);
+  if (!preference.available) {
+    showToast("Browser storage is unavailable; theme changes won't persist.");
+  }
 }
 
 document.addEventListener("click", (event) => {
