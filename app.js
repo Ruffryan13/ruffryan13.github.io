@@ -246,7 +246,7 @@ function openApp(id) {
       <section class="chess-game" aria-label="Local two-player chess">
         <div class="chess-toolbar">
           <div class="chess-status-block">
-            <p class="chess-overline">LOCAL TWO-PLAYER</p>
+            <p class="chess-overline" id="chess-overline">LOCAL TWO-PLAYER</p>
             <p class="chess-status" id="chess-status" role="status" aria-live="polite"></p>
             <p class="chess-hint" id="chess-hint"></p>
           </div>
